@@ -1,0 +1,51 @@
+# Custom commands for WinLaunch
+#
+# Use them with "?" in the search field: "?" alone lists all, "?text" searches them.
+# After saving, changes apply the next time WinLaunch opens.
+#
+# Each command is a [[command]] block with:
+#   name     name shown in the list (required)
+#   keyword  short word, e.g. "g" for "?g search terms" (optional)
+#   open     URL, folder or file to open
+#   run      program to start, optionally with
+#     args     arguments
+#     folder   working folder
+#   icon     file whose icon is shown, e.g. an .exe or .ico (optional)
+#
+# Otherwise icons come automatically: programs show their own, folders and files the
+# one Explorer shows, web pages and search commands the site's favicon.
+#
+# {query} is replaced with the text after the keyword ("?g rust" -> "rust").
+# Environment variables such as %USERPROFILE% or %ProgramFiles% are expanded.
+# Put paths with backslashes in single quotes: 'C:\Path'.
+
+[[command]]
+name = "Google"
+keyword = "g"
+open = "https://www.google.com/search?q={query}"
+
+[[command]]
+name = "Wikipedia"
+keyword = "w"
+open = "https://en.wikipedia.org/w/index.php?search={query}"
+
+[[command]]
+name = "Downloads"
+open = '%USERPROFILE%\Downloads'
+
+# Examples to adapt (remove the # at the start of the lines):
+#
+# [[command]]
+# name = "Home Assistant"
+# open = "http://homeassistant.local:8123"
+#
+# [[command]]
+# name = "OrcaSlicer with profile folder"
+# run = '%ProgramFiles%\OrcaSlicer\orca-slicer.exe'
+# args = '--datadir "D:\3D\Orca"'
+#
+# [[command]]
+# name = "Ping"
+# keyword = "ping"
+# run = 'cmd.exe'
+# args = '/k ping {query}'

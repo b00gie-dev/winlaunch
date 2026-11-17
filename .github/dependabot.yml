@@ -1,0 +1,19 @@
+# Proposes updates of the pinned GitHub Actions (commit SHAs) and of the Cargo
+# dependencies, one grouped PR per month each. Security updates come right away.
+# vpk in release.yml follows the velopack crate (see there).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      crates:
+        patterns: ["*"]

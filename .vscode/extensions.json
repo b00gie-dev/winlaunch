@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "rust-lang.rust-analyzer",
+    "ms-vscode.cpptools",
+    "tamasfe.even-better-toml",
+    "usernamehw.errorlens",
+    "fill-labs.dependi"
+  ],
+  "unwantedRecommendations": [
+    "rust-lang.rust"
+  ]
+}

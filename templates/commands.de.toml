@@ -1,0 +1,51 @@
+# Eigene Befehle für WinLaunch
+#
+# Aufruf im Suchfeld mit "?": "?" allein zeigt alle, "?text" sucht darin.
+# Nach dem Speichern gelten die Änderungen beim nächsten Öffnen von WinLaunch.
+#
+# Jeder Befehl ist ein Block [[command]] mit:
+#   name     angezeigter Name (Pflicht)
+#   keyword  kurzes Kürzel, z. B. "g" für "?g suchbegriff" (optional)
+#   open     URL, Ordner oder Datei öffnen
+#   run      Programm starten, dazu optional
+#     args     Parameter
+#     folder   Arbeitsordner
+#   icon     Datei, deren Symbol angezeigt wird, z. B. eine .exe oder .ico (optional)
+#
+# Symbole kommen sonst automatisch: Programme zeigen ihr eigenes, Ordner und Dateien
+# das aus dem Explorer, Webseiten und Suchbefehle das Favicon der Seite.
+#
+# {query} wird durch den Text hinter dem Kürzel ersetzt ("?g rust" -> "rust").
+# Umgebungsvariablen wie %USERPROFILE% oder %ProgramFiles% werden eingesetzt.
+# Pfade mit Backslash am besten in einfache Anführungszeichen setzen: 'C:\Pfad'.
+
+[[command]]
+name = "Google"
+keyword = "g"
+open = "https://www.google.com/search?q={query}"
+
+[[command]]
+name = "Wikipedia"
+keyword = "w"
+open = "https://de.wikipedia.org/w/index.php?search={query}"
+
+[[command]]
+name = "Downloads"
+open = '%USERPROFILE%\Downloads'
+
+# Beispiele zum Anpassen (# am Zeilenanfang entfernen):
+#
+# [[command]]
+# name = "Home Assistant"
+# open = "http://homeassistant.local:8123"
+#
+# [[command]]
+# name = "OrcaSlicer mit Profilordner"
+# run = '%ProgramFiles%\OrcaSlicer\orca-slicer.exe'
+# args = '--datadir "D:\3D-Druck\Orca"'
+#
+# [[command]]
+# name = "Ping"
+# keyword = "ping"
+# run = 'cmd.exe'
+# args = '/k ping {query}'

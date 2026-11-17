@@ -1,0 +1,162 @@
+name: Release
+
+# Builds the Velopack installer and update packages and publishes them as a GitHub
+# release of this repository, the update feed of every installation.
+#
+# Release a version:
+#   1. bump `version` in Cargo.toml (and Cargo.lock via `cargo build`), add its section
+#      to CHANGELOG.md, merge to main
+#   2. git tag v<version> && git push origin v<version>
+#
+# Whoever can publish a release here can run code with admin rights on every
+# installation (the autostart instance is elevated and applies updates). Hence:
+#   * only tags start this workflow (no manual runs from arbitrary branches; a ruleset
+#     restricts who may create v* tags),
+#   * two jobs: "build" runs all third-party code (cargo, build scripts, vpk) with a
+#     read-only token; only "publish" gets write access, and it runs no code from the
+#     repository or crates.io, it only uploads what "build" made,
+#   * every action is pinned to a commit (a moved tag cannot inject code; Dependabot
+#     proposes updates, see .github/dependabot.yml),
+#   * no build cache: the release is built from scratch, nothing restored from caches
+#     that other branches' runs wrote.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # Where the previous release comes from (base of the delta package).
+  # TRANSITION (0.8.0 only): the old releases repository, where 0.7.2 lives; set to
+  # this repository (https://github.com/b00gie-dev/winlaunch) afterwards. Installations
+  # up to 0.7.2 look for updates there: 0.8.0 is copied there once by hand.
+  PREVIOUS_REPO: https://github.com/b00gie-dev/winlaunch-releases
+
+jobs:
+  build:
+    name: Build and pack
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      vpk: ${{ steps.version.outputs.vpk }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Rust (stable, MSVC)
+        uses: dtolnay/rust-toolchain@39008827e6b4319a349e9a42dfc90579dd25f1ca # stable branch
+        with:
+          toolchain: stable # needed: pinned to a commit, the ref no longer names it
+
+      - name: Version from Cargo.toml must match the tag
+        id: version
+        shell: pwsh
+        env:
+          # Via the environment, never pasted into the script: a tag name may contain
+          # characters PowerShell would execute, e.g. "$(...)".
+          TAG: ${{ github.ref_name }}
+        run: |
+          $packages = (cargo metadata --locked --format-version 1 | ConvertFrom-Json).packages
+          $version = ($packages | Where-Object name -eq 'winlaunch').version
+          if ("v$version" -ne $env:TAG) {
+            throw "Tag $env:TAG does not match Cargo.toml version $version"
+          }
+          # vpk is pinned to the version of the velopack crate in Cargo.lock: both must
+          # match anyway, and the tool then follows the crate's (reviewed) updates
+          # instead of whatever NuGet offers on release day.
+          $vpk = ($packages | Where-Object name -eq 'velopack').version
+          if (-not $vpk) { throw "velopack not found in Cargo.lock" }
+          "VERSION=$version" >> $env:GITHUB_ENV
+          "VPK_VERSION=$vpk" >> $env:GITHUB_ENV
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "vpk=$vpk" >> $env:GITHUB_OUTPUT
+
+      - name: Release notes from CHANGELOG.md
+        # The "## <version>" section becomes the release notes: WinLaunch shows them
+        # before ("/update") and after an update, and on the GitHub release page.
+        # Fails if the section is missing or empty, so it cannot be forgotten.
+        shell: pwsh
+        run: |
+          $lines = Get-Content CHANGELOG.md -Encoding utf8
+          $start = [array]::IndexOf($lines, "## $env:VERSION")
+          if ($start -lt 0) { throw "CHANGELOG.md has no section '## $env:VERSION'" }
+          $notes = for ($i = $start + 1; $i -lt $lines.Count -and -not $lines[$i].StartsWith('## '); $i++) { $lines[$i] }
+          $text = ($notes -join "`n").Trim()
+          if (-not $text) { throw "The section '## $env:VERSION' in CHANGELOG.md is empty" }
+          [IO.File]::WriteAllText("$PWD/release-notes.md", $text, (New-Object Text.UTF8Encoding $false))
+          $text
+
+      - name: Unit tests
+        run: cargo test --release --locked
+
+      - name: Build (release)
+        run: cargo build --release --locked
+
+      - name: Install .NET for vpk
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install vpk
+        run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
+
+      - name: Download latest release (for delta updates)
+        # With a token: GitHub's limit for anonymous API calls is shared by all hosted
+        # runners and often used up (403 "rate limit exceeded"). Reading a public
+        # repository, this job's read-only token is enough. No continue-on-error: a failed
+        # download used to go unnoticed and the release silently came without a delta.
+        run: >-
+          vpk download github --repoUrl ${{ env.PREVIOUS_REPO }} --outputDir releases
+          --token "${{ github.token }}"
+
+      - name: Pack
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory publish | Out-Null
+          Copy-Item target/release/winlaunch.exe publish/
+          vpk pack --packId WinLaunch --packVersion $env:VERSION --packDir publish `
+            --mainExe winlaunch.exe --packTitle WinLaunch --packAuthors WinLaunch `
+            --shortcuts StartMenuRoot --releaseNotes release-notes.md --outputDir releases
+
+      - name: Keep packages as workflow artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: winlaunch-${{ env.VERSION }}
+          path: releases/
+          retention-days: 30
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write # create the release and upload its files
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      VPK_VERSION: ${{ needs.build.outputs.vpk }}
+    steps:
+      # No checkout: this job runs nothing from the repository.
+      - name: Packages from the build job
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: winlaunch-${{ env.VERSION }}
+          path: releases
+
+      - name: Install .NET for vpk
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install vpk
+        run: dotnet tool install -g vpk --version ${{ env.VPK_VERSION }}
+
+      - name: Publish as a release of this repository
+        shell: pwsh
+        run: |
+          vpk upload github --repoUrl "${{ github.server_url }}/${{ github.repository }}" `
+            --outputDir releases --token "${{ github.token }}" --publish `
+            --releaseName "WinLaunch $env:VERSION" --tag "v$env:VERSION"

@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cargo build",
+      "type": "cargo",
+      "command": "build",
+      "problemMatcher": ["$rustc"],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "cargo build --release",
+      "type": "cargo",
+      "command": "build",
+      "args": ["--release"],
+      "problemMatcher": ["$rustc"],
+      "group": "build"
+    },
+    {
+      // Only one instance may run (shared mutex + keyboard hook), so a running
+      // WinLaunch, e.g. the one from autostart, has to go before debugging.
+      "label": "winlaunch: quit running instance",
+      "type": "process",
+      "command": "${workspaceFolder}/target/debug/winlaunch.exe",
+      "args": ["--quit"],
+      "problemMatcher": []
+    },
+    {
+      "label": "build + quit running instance",
+      "dependsOrder": "sequence",
+      "dependsOn": ["cargo build", "winlaunch: quit running instance"],
+      "problemMatcher": []
+    }
+  ]
+}
