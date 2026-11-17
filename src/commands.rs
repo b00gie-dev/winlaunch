@@ -152,7 +152,7 @@ pub fn run(cmd: &'static Command, elevated: bool) {
                 LockWorkStation();
             }
             Action::Sleep => {
-                SetSuspendState(0, 0, 0);
+                SetSuspendState(false, false, false);
             }
             Action::SignOut => shutdown(&["/l"]),
             Action::Restart => shutdown(&["/r", "/t", "0"]),
