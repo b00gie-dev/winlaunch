@@ -29,11 +29,8 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  # Where the previous release comes from (base of the delta package).
-  # TRANSITION (0.8.0 only): the old releases repository, where 0.7.2 lives; set to
-  # this repository (https://github.com/b00gie-dev/winlaunch) afterwards. Installations
-  # up to 0.7.2 look for updates there: 0.8.0 is copied there once by hand.
-  PREVIOUS_REPO: https://github.com/b00gie-dev/winlaunch-releases
+  # Where the previous release comes from (base of the delta package): this repository.
+  PREVIOUS_REPO: https://github.com/b00gie-dev/winlaunch
 
 jobs:
   build:
