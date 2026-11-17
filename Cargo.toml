@@ -13,7 +13,7 @@ unic-langid = "0.9.6"
 velopack = "1.2.161"
 
 [dependencies.windows-sys]
-version = "0.59"
+version = "0.61"
 features = [
     "Win32_Foundation",
     "Win32_Security",
