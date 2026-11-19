@@ -27,6 +27,8 @@ pub enum Kind {
 enum Action {
     /// `ms-settings:` URI
     Uri(&'static str),
+    /// Opens Windows Update and starts the check for updates.
+    CheckWindowsUpdates,
     Lock,
     Sleep,
     SignOut,
@@ -72,12 +74,12 @@ const fn system(id: &'static str, glyph: char, action: Action) -> Command {
 }
 
 pub static COMMANDS: &[Command] = &[
-    // "-action" opens Windows Update and starts the check right away.
-    setting(
-        "check-updates",
-        '\u{E895}',
-        "ms-settings:windowsupdate-action",
-    ),
+    Command {
+        id: "check-updates",
+        glyph: '\u{E895}',
+        kind: Kind::Setting,
+        action: Action::CheckWindowsUpdates,
+    },
     setting("windows-update", '\u{E777}', "ms-settings:windowsupdate"),
     setting("bluetooth", '\u{E702}', "ms-settings:bluetooth"),
     setting("wifi", '\u{E701}', "ms-settings:network-wifi"),
@@ -145,9 +147,13 @@ pub fn run(cmd: &'static Command, elevated: bool) {
         crate::custom::edit(elevated);
         return;
     }
+    if let Action::CheckWindowsUpdates = cmd.action {
+        crate::apps::open(WINDOWS_UPDATE_URI.to_string(), elevated);
+    }
     std::thread::spawn(move || unsafe {
         match cmd.action {
             Action::Uri(_) => {}
+            Action::CheckWindowsUpdates => start_update_scan(),
             Action::Lock => {
                 LockWorkStation();
             }
@@ -169,6 +175,18 @@ pub fn run(cmd: &'static Command, elevated: bool) {
             }
         }
     });
+}
+
+const WINDOWS_UPDATE_URI: &str = "ms-settings:windowsupdate";
+
+/// Starts the check for updates like the "Check for updates" button in Settings.
+/// `ms-settings:windowsupdate-action` was meant to do this, but Settings often ignores
+/// the "-action" part (e.g. when it is already open), so it only showed the page.
+fn start_update_scan() {
+    let _ = Process::new(crate::system_exe("UsoClient.exe"))
+        .arg("StartInteractiveScan")
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn();
 }
 
 fn shutdown(args: &[&str]) {
@@ -203,6 +221,7 @@ mod tests {
         for cmd in COMMANDS {
             match (cmd.kind, cmd.action) {
                 (Kind::Setting, Action::Uri(uri)) => assert!(uri.starts_with("ms-settings:")),
+                (Kind::Setting, Action::CheckWindowsUpdates) => {}
                 (Kind::System, Action::Uri(_)) | (Kind::Setting, _) => {
                     panic!("{}: kind and action do not match", cmd.id)
                 }
