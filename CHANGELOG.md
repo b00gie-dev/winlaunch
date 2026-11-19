@@ -7,6 +7,10 @@ so every release needs a section here. Keep entries short: one line each, for us
 Start each entry with its kind in bold; WinLaunch shows a matching icon and hides the
 prefix: `**New:**`, `**Improved:**`, `**Fix:**` or `**Security:**`.
 
+## 0.8.1
+
+- **Fix:** "Check for updates" now reliably starts the check in Windows Update instead of only opening the page
+
 ## 0.8.0
 
 - **New:** WinLaunch is open source (MIT license): github.com/b00gie-dev/winlaunch
