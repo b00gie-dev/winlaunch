@@ -7,6 +7,10 @@ so every release needs a section here. Keep entries short: one line each, for us
 Start each entry with its kind in bold; WinLaunch shows a matching icon and hides the
 prefix: `**New:**`, `**Improved:**`, `**Fix:**` or `**Security:**`.
 
+## 0.9.0
+
+- **New:** Unit converter: type "100 ps", "5 mi in km" or "-5 °c to f" for lengths, weights, temperatures, power, data sizes and more
+
 ## 0.8.1
 
 - **Fix:** "Check for updates" now reliably starts the check in Windows Update instead of only opening the page

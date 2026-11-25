@@ -20,6 +20,7 @@ result-kind-currency = Währung
 currency-source = EZB, { $date }
 currency-loading = Kurse werden geladen …
 currency-unavailable = Keine Kurse (offline?)
+result-kind-units = Einheiten
 
 result-kind-setting = Einstellungen
 result-kind-command = Befehl

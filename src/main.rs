@@ -21,6 +21,7 @@ mod icon_cache;
 mod net;
 mod search;
 mod ui;
+mod units;
 mod update;
 mod usage;
 

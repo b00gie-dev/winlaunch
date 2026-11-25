@@ -464,13 +464,15 @@ unsafe fn update_results() {
         }
     }
 
-    // Calculator or currency converter: the result comes first (normal search only).
+    // Calculator, currency or unit converter: the result comes first (normal search only).
     let language = crate::i18n::language();
     let answer = (custom_text.is_none() && !command_mode)
         .then(|| {
-            crate::calc::answer(&text, language).or_else(|| {
-                crate::currency::answer(&text, language, MAIN as usize, WM_INDEX_UPDATED)
-            })
+            crate::calc::answer(&text, language)
+                .or_else(|| {
+                    crate::currency::answer(&text, language, MAIN as usize, WM_INDEX_UPDATED)
+                })
+                .or_else(|| crate::units::answer(&text, language))
         })
         .flatten()
         .map(apps::App::for_answer);
