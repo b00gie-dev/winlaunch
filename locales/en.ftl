@@ -61,6 +61,9 @@ currency-loading = Loading exchange rates …
 # Shown instead of a result when no rates could be downloaded (e.g. offline).
 currency-unavailable = No exchange rates (offline?)
 
+# Label of the unit converter row ("100 ps in kw"): first row of the list.
+result-kind-units = Units
+
 # Label for results that open a page of the Windows Settings app.
 result-kind-setting = Settings
 

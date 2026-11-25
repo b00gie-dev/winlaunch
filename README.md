@@ -83,6 +83,16 @@ If the input is a calculation, the result is the first row ("Calculator"); Enter
 - Rates: daily rates of the European Central Bank (`eurofxref-daily.xml`, ~1.5 KB, no account). They are fetched **only when a conversion is typed** and the stored rates are older than a day, in the background through WinHTTP (delay-loaded). Stored in `%LOCALAPPDATA%\WinLaunch\rates.xml`, so they also work offline; after a failure, the next try is an hour later at the earliest.
 - The very first time, "Loading exchange rates …" shows briefly.
 
+## Unit converter
+
+`100 ps`, `100 ps in kw`, `5 mi`, `-5 °c to f`, `3,5 gb mb`, `20 m2 in sq ft`: the result is the first row (e.g. "100 PS = 73.549875 kW", label "Units"); Enter copies the converted value. Works offline, no data is fetched.
+
+- Without a target, each unit goes to its usual counterpart: PS ↔ kW, mi ↔ km, °F ↔ °C, lb ↔ kg, in → cm, mph ↔ km/h, bar ↔ psi, GB → MB …
+- Length, area, volume, mass, temperature, speed, power, energy, pressure, data sizes and time, as symbols (`km`, `m²`/`m2`/`qm`, `km/h`) or English and German names (`miles`, `Meilen`, `Stunden`).
+- Data sizes like Explorer: 1 KB = 1024 bytes (`KiB`, `MiB` … mean the same); bits with decimal prefixes like network speeds (1 Mbit = 1,000,000 bits).
+- Short names that would take over normal searches are left out: `3d` stays a search for "3D Viewer", `4k` for "4K" (use `days`, `kelvin` …).
+- Up to 8 significant digits, in the format of the UI language.
+
 ## File search
 
 With `%` in the search field: `%invoice 2024` searches files and folders whose name contains words starting like these (every word must match), newest first. Next to the name the folder is shown in gray, on the right "File" or "Folder".
